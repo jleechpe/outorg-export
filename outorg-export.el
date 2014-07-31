@@ -1,4 +1,26 @@
-;; * Code
+;;; outorg-export.el -- Automated exporting through org
+
+;; Author: Jonathan Leech-Pepin <jonathan.leechpepin AT gmail DOT com
+;; Version: 0.1
+;; URL: https://github.com/jleechpe/outorg-export
+
+;;;; MetaData
+;; :PROPERTIES:
+;; :copyright: Jonathan Leech-Pepin
+;; :copyright-years: 2014+
+;; :version:  0.1
+;; :licence:  GPLv3 or later
+;; :licence-url: http://www.gnu.org/licenses/
+;; :part-of-emacs: no
+;; :author:   Jonathan Leech-Pepin
+;; :author_email: jonathan.leechpepin AT gmail DOT com
+;; :keywords: emacs org-mode export
+;; :END:
+
+;;;; Commentary
+;;;;; About outorg-export
+
+;;; Code
 
 ;; Ensure Outorg is loaded.
 (require 'outorg)
@@ -78,7 +100,8 @@ If called interactively and `org-export-export-commands' is
      ;; Case 1 :: interactive and no export-format set
      ((and arg
            (not export-format))
-      (lwarn "outorg-export" :warning "Org-export-export-commands is not set."))
+      (lwarn "outorg-export" :warning
+             "Org-export-export-commands is not set."))
      ;; Case 2 :: Export-format is simply `t' or `(quote t)
      ((eq 't export-format)
       ;; (message "2")
@@ -135,15 +158,10 @@ to be exported."
          ;; Create search regexp (multiple comment indicators allowed
          ;; at start of string), followed by appropriate number of
          ;; stars and `section'.
-         (section-match (format
-                         "^%s+ \\*\\{%s\\} %s"
-                         comment-start
-                         level
-                         section))
+         (section-match (outorg-export--section-calc
+                         level section))
          ;; Same regexp as above, but without `section'.
-         (section-end   (format
-                         "^%s+ \\*\\{,%s\\}"
-                         comment-start
+         (section-end   (outorg-export--section-calc
                          level)))
     (with-temp-buffer
       (insert-file-contents origin)
@@ -180,6 +198,22 @@ to be exported."
            (lwarn "outorg export" :warning
                   "Headline \"%s\" not found.  Export failed."
                     section)))))))
+
+(defun outorg-export--section-calc (level &optional section)
+  ""
+  (let* ((at-level    (outshine-calc-outline-string-at-level level))
+         (@1          (outshine-calc-outline-string-at-level 1))
+         (base@1      (outshine-calc-outline-base-string-at-level 1))
+         (start-level at-level)
+         (end-level   (replace-regexp-in-string
+                       (format "%s $" base@1)
+                       (format "[%s]\\\\{1,%s\\\\} "
+                               base@1 level)
+                       @1)))
+    (if section
+        (format "%s%s.*" (regexp-quote start-level) section)
+      (format "%s.*" end-level))
+    ))
 
 (defun outorg-export--export-to (exporter file)
   "Performs the actual export process to `FILE'.
