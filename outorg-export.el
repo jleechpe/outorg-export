@@ -79,14 +79,14 @@ If called interactively and `org-export-export-commands' is
      ((and arg
            (not export-format))
       (lwarn "outorg-export" :warning "Org-export-export-commands is not set."))
-     ;; Case 2 :: Non-nested list with specific headline
-     ((stringp (car export-format))
-      ;; (message "2")
-      (outorg-export--export export-format arg))
-     ;; Case 3 :: Export-format is simply `t' or `(quote t)
+     ;; Case 2 :: Export-format is simply `t' or `(quote t)
      ((eq 't export-format)
-      ;; (message "3")
+      ;; (message "2")
       (outorg-export--export (list export-format) arg))
+     ;; Case 3 :: Non-nested list with specific headline
+     ((stringp (car export-format))
+      ;; (message "3")
+      (outorg-export--export export-format arg))
      ;; Case 4 :: Export-format is non-nested and exporting whole
      ;; buffer
      ((equal 't (car export-format))
