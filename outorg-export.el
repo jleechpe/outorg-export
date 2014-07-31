@@ -210,5 +210,5 @@ caught before searching the obarray."
 (provide 'outorg-export)
 
 ;; Local Variables:
-;; outorg-export-export-commands: (("Introduction" md))
+;; outorg-export-export-commands: (("Introduction" md "README"))
 ;; End:
