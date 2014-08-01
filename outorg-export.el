@@ -178,10 +178,9 @@ ARG is used to determine if called interactively."
               (forward-line 0)
               (delete-region (point-min) (point))
               (forward-line 1)
-              ;; Section can go to end of buffer, no error needed
-              (re-search-forward section-end (point-max) 'noerror)
+              ;; Use `outline-end-of-subtree' to dtrt
+              (outline-end-of-subtree)
               ;; Delete everything after the end of the section
-              (forward-line 0)
               (delete-region (point) (point-max)))
             ;; Required to ensure export succeeds (or
             ;; outorg-code-buffer-point-marker will signal an error)
@@ -201,19 +200,8 @@ ARG is used to determine if called interactively."
 
 (defun outorg-export--section-calc (level &optional section)
   ""
-  (let* ((at-level    (outshine-calc-outline-string-at-level level))
-         (@1          (outshine-calc-outline-string-at-level 1))
-         (base@1      (outshine-calc-outline-base-string-at-level 1))
-         (start-level at-level)
-         (end-level   (replace-regexp-in-string
-                       (format "%s $" base@1)
-                       (format "[%s]\\\\{1,%s\\\\} "
-                               base@1 level)
-                       @1)))
-    (if section
-        (format "%s%s.*" (regexp-quote start-level) section)
-      (format "%s.*" end-level))
-    ))
+  (let* ((start-level (outshine-calc-outline-string-at-level level)))
+    (format "%s%s.*" (regexp-quote start-level) section)))
 
 (defun outorg-export--export-to (exporter file)
   "Performs the actual export process to `FILE'.
