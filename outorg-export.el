@@ -204,8 +204,8 @@ ARG is used to determine if called interactively."
             (outorg-convert-to-org)
             (if (listp exporter)
                 (loop for type in exporter do
-                      (outorg-export--export-to type file))
-              (outorg-export--export-to exporter file)))
+                      (outorg-export--export-to type file arg))
+              (outorg-export--export-to exporter file arg)))
         ;; Only indicates missing headline, all other cases should be
         ;; caught by cond above.
         (error
@@ -225,7 +225,7 @@ ARG is used to determine if called interactively."
     ;;(message "%s%s" (regexp-quote start-level) section)
     (format "%s%s.*" (regexp-quote start-level) section)))
 
-(defun outorg-export--export-to (exporter file)
+(defun outorg-export--export-to (exporter file arg)
   "Performs the actual export process to `FILE'.
 
 `EXPORTER' is used to determine which export function to use by
@@ -234,11 +234,13 @@ cases where the functions are not clear such as PDF and Latex are
 caught before searching the obarray."
   (let ((buffer-file-name file)
         (search-format    (format "org-%s-export-to" exporter))
+        (ox-file    (format "ox-%s" exporter))
         export-function)
     (cond
      ;; PDF uses latex so must test for PDF or Latex specifically
      ((equal 'pdf exporter)
-      (setq export-function 'org-latex-export-to-pdf))
+      (setq export-function 'org-latex-export-to-pdf
+            ox-file   "ox-latex"))
      ((equal 'latex exporter)
       (setq export-function 'org-latex-export-to-latex))
      ;; Find matching export function, special cases of
@@ -250,10 +252,28 @@ caught before searching the obarray."
     ;; All-completions returns string, ensure symbol for funcall
     ;; purposes
     ;; Debug string to show what is being called on export
-    (funcall (intern export-function) outorg-export-async)
     (lwarn "outorg-export" :debug
            "%s" `(funcall ,(intern export-function)
-                          ,outorg-export-async))))
+                          ,outorg-export-async))
+    (condition-case nil
+        (progn
+          (require (intern ox-file))
+          (funcall (intern export-function) outorg-export-async))
+      (file-error
+       (if arg
+           (lwarn "outorg-export" :warning
+                  "Failed to require `%s'.  Export aborted")
+         (message "Export failed: %s" export-function)))
+      (void-function
+       (lwarn "outorg-export" :error
+              "Unable to find export function: `%s' but `%s' is loaded."
+              export-function ox-file))
+      (error
+       (if arg
+           (lwarn "outorg-export" :warning
+                  "Export failed: %s" export-function)
+         (message "Export failed: %s" export-function))))
+    ))
 
 (provide 'outorg-export)
 
