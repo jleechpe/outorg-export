@@ -17,10 +17,10 @@
 ;; :keywords: emacs org-mode export
 ;; :END:
 
-;;;; Commentary
+;;;; Commentary:
 ;;;;; About outorg-export
 
-;;; Code
+;;; Code:
 
 ;; Ensure Outorg is loaded.
 (require 'outorg)
@@ -39,10 +39,10 @@ is a list like this:
 
     (headline &optional exporter file level)
 
-headline     Outshine commented headline to export from.  If `t',
+headline     Outshine commented headline to export from.  If t,
              defaults to entire file.
 exporter     Org exporter format to use when exporting.  If not
-             specified (blank, `t' or `nil'), defaults to an Org
+             specified (blank, t or nil), defaults to an Org
              file.  This is a symbol for the exporter to use.  If
              exporting to PDF, specify `PDF' rather than `LATEX'
              otherwise it will be exported as a `.tex' file.
@@ -54,7 +54,7 @@ level        By default `SECTION' will search for top level headlines
              `* '.  Level allows for exporting specific sublevels
              instead.  This integer indicates how many stars to match.
 
-Setting `outorg-export-export-commands' to `t' will be treated as equal
+Setting `outorg-export-export-commands' to t will be treated as equal
 to `(('t 'org))', exporting the entire file as an org document."
   :group 'outorg-export
   :safe #'listp
@@ -70,17 +70,16 @@ to `(('t 'org))', exporting the entire file as an org document."
                  (const :tag "Nothing" nil)))
 
 (defun outorg-export-export-insinuate (&optional disable)
-  "Adds `after-save-hook' to ensure `outorg-export-export' is run.
+  "Add `after-save-hook' to ensure `outorg-export-export' is run.
 
-If `DISABLE' is `t', remove the hook."
+If `DISABLE' is t, remove the hook."
   (interactive)
   (if disable
       (remove-hook 'after-save-hook 'outorg-export-export)
     (add-hook 'after-save-hook 'outorg-export-export)))
 
 (defun outorg-export-export (&optional arg)
-  "Exports a portion of the current buffer after converting it using
-`outorg'.
+  "Exports a portion of the current buffer after converting it using `outorg'.
 
 Export is controlled by `org-export-export-commands' either set
 globally or using buffer local variables (recommended).  Setting
@@ -91,7 +90,9 @@ For details on `org-export-export-commands', see the variable's
 docstring.
 
 If called interactively and `org-export-export-commands' is
-`nil', it will warn that there is no specified export."
+nil, it will warn that there is no specified export.
+
+ARG is used to determine if called interactively."
   (interactive "p")
   (let ((export-format outorg-export-export-commands))
     ;; Commented messages in cond statement are for debugging, to
@@ -122,8 +123,7 @@ If called interactively and `org-export-export-commands' is
             (outorg-export--export entry arg))))))
 
 (defun outorg-export--export (export arg)
-  "Creates a temporary buffer from the file and isolates the content
-to be exported."
+  "Creates a temporary buffer and isolates content to be exported."
   (let* (;; Settings from parent file to ensure outorg can process
          ;; correctly.
          (origin        (buffer-file-name))
@@ -243,6 +243,8 @@ caught before searching the obarray."
 
 (provide 'outorg-export)
 
+;;; outorg-export.el ends here
+
 ;; Local Variables:
-;; outorg-export-export-commands: (("Introduction" md "README"))
+;; outorg-export-export-commands: (("Code" md "test"))
 ;; End:
