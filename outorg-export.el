@@ -8,7 +8,7 @@
 ;; :PROPERTIES:
 ;; :copyright: Jonathan Leech-Pepin
 ;; :copyright-years: 2014+
-;; :version:  0.1
+;; :version:  0.3
 ;; :licence:  GPLv3 or later
 ;; :licence-url: http://www.gnu.org/licenses/
 ;; :part-of-emacs: no
@@ -29,6 +29,16 @@
   "Customization options for automatic export of portions of a file
 through the use of outorg."
   :group 'outorg)
+
+(defcustom outorg-export-async 'nil
+  "Variable controlling whether to export in background.
+
+If NIL, export normally.  If T, export using the asynchronous process,
+ensuring the export is run in background."
+  :type '(choice (const :tag "Asynchronous" 't)
+                 (const :tag "Synchronous" 'nil))
+  :group 'outorg-export
+  :safe 'symbolp)
 
 (defcustom outorg-export-export-commands 'nil
   "Variable controlling what will be exported after saving.
@@ -235,7 +245,11 @@ caught before searching the obarray."
                                   obarray 'fboundp)))))
     ;; All-completions returns string, ensure symbol for funcall
     ;; purposes
-    (funcall (intern export-function))))
+    ;; Debug string to show what is being called on export
+    (funcall (intern export-function) outorg-export-async)
+    (lwarn "outorg-export" :debug
+           "%s" `(funcall ,(intern export-function)
+                          ,outorg-export-async))))
 
 (provide 'outorg-export)
 
