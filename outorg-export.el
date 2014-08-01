@@ -105,20 +105,24 @@ ARG is used to determine if called interactively."
              "Org-export-export-commands is not set."))
      ;; Case 2 :: Export-format is simply `t' or `(quote t)
      ((eq 't export-format)
-      ;; (message "2")
+      (lwarn "outorg-export" :debug
+             "Exporting `outorg-export-export' case 2")
       (outorg-export--export (list export-format) arg))
      ;; Case 3 :: Non-nested list with specific headline
      ((stringp (car export-format))
-      ;; (message "3")
+      (lwarn "outorg-export" :debug
+             "Exporting `outorg-export-export' case 3")
       (outorg-export--export export-format arg))
      ;; Case 4 :: Export-format is non-nested and exporting whole
      ;; buffer
      ((equal 't (car export-format))
-      ;; (message "4")
+      (lwarn "outorg-export" :debug
+             "Exporting `outorg-export-export' case 4")
       (outorg-export--export export-format arg))
      ;; Case 5 :: Export-format is nested lists
      (t
-      ;; (message "5")
+      (lwarn "outorg-export" :debug
+             "Exporting `outorg-export-export' case 5")
       (loop for entry in export-format do
             (outorg-export--export entry arg))))))
 
@@ -159,10 +163,7 @@ ARG is used to determine if called interactively."
          ;; at start of string), followed by appropriate number of
          ;; stars and `section'.
          (section-match (outorg-export--section-calc
-                         level section))
-         ;; Same regexp as above, but without `section'.
-         (section-end   (outorg-export--section-calc
-                         level)))
+                         level section)))
     (with-temp-buffer
       (insert-file-contents origin)
       (goto-char (point-min))
@@ -187,7 +188,10 @@ ARG is used to determine if called interactively."
             (setq outorg-code-buffer-point-marker (point-marker))
             ;; Convert in place into `org', then send to export
             (outorg-convert-to-org)
-            (outorg-export--export-to exporter file))
+            (if (listp exporter)
+                (loop for type in exporter do
+                      (outorg-export--export-to type file))
+              (outorg-export--export-to exporter file)))
         ;; Only indicates missing headline, all other cases should be
         ;; caught by cond above.
         (error
@@ -200,7 +204,11 @@ ARG is used to determine if called interactively."
 
 (defun outorg-export--section-calc (level &optional section)
   ""
-  (let* ((start-level (outshine-calc-outline-string-at-level level)))
+  (let ((start-level (outshine-calc-outline-string-at-level level)))
+    (lwarn "outorg-export" :debug
+           "Headline match: %s%s.*" (regexp-quote start-level)
+           section)
+    ;;(message "%s%s" (regexp-quote start-level) section)
     (format "%s%s.*" (regexp-quote start-level) section)))
 
 (defun outorg-export--export-to (exporter file)
@@ -234,5 +242,5 @@ caught before searching the obarray."
 ;;; outorg-export.el ends here
 
 ;; Local Variables:
-;; outorg-export-export-commands: (("Code" md "test"))
+;; outorg-export-export-commands: (("Code" (md ascii) "test"))
 ;; End:
