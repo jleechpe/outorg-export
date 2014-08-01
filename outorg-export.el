@@ -33,8 +33,12 @@ through the use of outorg."
 (defcustom outorg-export-async 'nil
   "Variable controlling whether to export in background.
 
-If NIL, export normally.  If T, export using the asynchronous process,
-ensuring the export is run in background."
+If NIL, export normally.  If T, export using the asynchronous
+process, ensuring the export is run in background.
+
+Asynchronous export uses the same settings as manually exporting
+an org file asynchronously.  See `org-export-async-init-file' for
+configuration details."
   :type '(choice (const :tag "Asynchronous" 't)
                  (const :tag "Synchronous" 'nil))
   :group 'outorg-export
