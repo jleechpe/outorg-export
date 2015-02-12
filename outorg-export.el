@@ -7,7 +7,7 @@
 ;;;; MetaData
 ;; :PROPERTIES:
 ;; :copyright: Jonathan Leech-Pepin
-;; :copyright-years: 2014+
+;; :copyright-years: 2014-2015
 ;; :version:  0.3
 ;; :licence:  GPLv3 or later
 ;; :licence-url: http://www.gnu.org/licenses/
@@ -51,7 +51,7 @@ If NIL, nothing will be exported.  Otherwise it must be a list of
 entries for sections to be exported and exporter to use.  Each entry
 is a list like this:
 
-    (headline &optional exporter file level)
+    (headline &optional exporter file level options)
 
 headline     Outshine commented headline to export from.  If t,
              defaults to entire file.
@@ -67,6 +67,9 @@ file         If set, specifies the export file name.  If `T', defaults
 level        By default `SECTION' will search for top level headlines
              `* '.  Level allows for exporting specific sublevels
              instead.  This integer indicates how many stars to match.
+options      List of export variables to be set prior to export.
+             These values are provided as a let binding around the
+             export process.
 
 Setting `outorg-export-export-commands' to t will be treated as equal
 to `(('t 'org))', exporting the entire file as an org document."
@@ -79,7 +82,9 @@ to `(('t 'org))', exporting the entire file as an org document."
                           (choice (const :tag "Buffer file name" t)
                                   (const :tag "Headline name" nil)
                                   (string :tag "Export file name"))
-                          (integer :value 1 :tag "Level")))
+                          (integer :value 1 :tag "Level")
+                          (list   (symbol :tag "Variable")
+                                  (symbol :tag "Value"))))
                  (const :tag "Entire File as Org" t)
                  (const :tag "Nothing" nil)))
 
@@ -169,6 +174,10 @@ ARG is used to determine if called interactively."
                          ((file-name-sans-extension
                            (file-name-nondirectory
                             buffer-file-name)))))
+         ;; Get the list of export options to be used
+         (options       (if (symbolp (nth 4 export))
+                            (symbol-value (nth 4 export))
+                          (nth 4 export)))
          ;; Default to level 1 if not specified
          (level         (or
                          (nth 3 export)
@@ -182,39 +191,40 @@ ARG is used to determine if called interactively."
       (insert-file-contents origin)
       (goto-char (point-min))
       (funcall mode)
-      (condition-case nil
-          (progn
-            ;; Only search if section is a string
-            (when (stringp section)
-              ;; If section is not found, signal error so that nothing
-              ;; is exported
-              (re-search-forward section-match (point-max) 'nil)
-              ;; Delete everything before matching section
-              (forward-line 0)
-              (delete-region (point-min) (point))
-              (forward-line 1)
-              ;; Use `outline-end-of-subtree' to dtrt
-              (outline-end-of-subtree)
-              ;; Delete everything after the end of the section
-              (delete-region (point) (point-max)))
-            ;; Required to ensure export succeeds (or
-            ;; outorg-code-buffer-point-marker will signal an error)
-            (setq outorg-code-buffer-point-marker (point-marker))
-            ;; Convert in place into `org', then send to export
-            (outorg-convert-to-org)
-            (if (listp exporter)
-                (loop for type in exporter do
-                      (outorg-export--export-to type file arg))
-              (outorg-export--export-to exporter file arg)))
-        ;; Only indicates missing headline, all other cases should be
-        ;; caught by cond above.
-        (error
-         ;; Passed interactive argument from initial call.  Only warn
-         ;; if interactive.
-         (when arg
-           (lwarn "outorg export" :warning
-                  "Headline \"%s\" not found.  Export failed."
-                    section)))))))
+      (progv (mapcar #'car options) (mapcar #'cadr options)
+       (condition-case nil
+           (progn
+             ;; Only search if section is a string
+             (when (stringp section)
+               ;; If section is not found, signal error so that nothing
+               ;; is exported
+               (re-search-forward section-match (point-max) 'nil)
+               ;; Delete everything before matching section
+               (forward-line 0)
+               (delete-region (point-min) (point))
+               (forward-line 1)
+               ;; Use `outline-end-of-subtree' to dtrt
+               (outline-end-of-subtree)
+               ;; Delete everything after the end of the section
+               (delete-region (point) (point-max)))
+             ;; Required to ensure export succeeds (or
+             ;; outorg-code-buffer-point-marker will signal an error)
+             (setq outorg-code-buffer-point-marker (point-marker))
+             ;; Convert in place into `org', then send to export
+             (outorg-convert-to-org)
+             (if (listp exporter)
+                 (loop for type in exporter do
+                       (outorg-export--export-to type file arg))
+               (outorg-export--export-to exporter file arg)))
+         ;; Only indicates missing headline, all other cases should be
+         ;; caught by cond above.
+         (error
+          ;; Passed interactive argument from initial call.  Only warn
+          ;; if interactive.
+          (when arg
+            (lwarn "outorg export" :warning
+                   "Headline \"%s\" not found.  Export failed."
+                   section))))))))
 
 (defun outorg-export--section-calc (level &optional section)
   ""
