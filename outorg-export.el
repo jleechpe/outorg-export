@@ -1,4 +1,4 @@
-;;; outorg-export.el -- Automated exporting through org
+;;; outorg-export.el --- Automated exporting through org
 
 ;; Author: Jonathan Leech-Pepin <jonathan.leechpepin AT gmail DOT com
 ;; Version: 0.1
